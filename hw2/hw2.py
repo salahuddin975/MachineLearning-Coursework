@@ -15,14 +15,14 @@ def get_dataset(url, batch_size, column_names, label_names):
     train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(url), origin=url)
     print("Local copy of the dataset file: {}".format(train_dataset_fp))
 
-    train_dataset = tf.data.experimental.make_csv_dataset(           #The make_csv_dataset function returns a tf.data.Dataset of (features, label) pairs, where features is a dictionary: {'feature_name': value}
+    train_dataset = tf.data.experimental.make_csv_dataset(
         train_dataset_fp,
         batch_size,
         column_names=column_names,
         label_name=label_names,
         num_epochs=1)
 
-    return train_dataset
+    return train_dataset         #returns (features, label) pairs; where features is a dictionary: {'feature_name': value}
 
 
 def create_the_model():
@@ -65,10 +65,11 @@ def train_the_model(model, train_dataset):
         train_loss_results.append(epoch_loss_avg.result())
         train_accuracy_results.append(epoch_accuracy.result())
 
-        if epoch % 50 == 0:
+        if epoch % 25 == 0:
             print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(epoch, epoch_loss_avg.result(), epoch_accuracy.result()))
 
     return model, train_loss_results, train_accuracy_results
+
 
 #========================================= Plots ================================
 
@@ -103,10 +104,10 @@ def visualize_loss_function_over_time(train_loss_results, train_accuracy_results
 def evaluate_test_data(model, test_dataset):
     test_accuracy = tf.keras.metrics.Accuracy()
 
-    for (x, y) in test_dataset:
-        logits = model(x)
+    for (features, label) in test_dataset:
+        logits = model(features)
         prediction = tf.argmax(logits, axis=1, output_type=tf.int32)
-        test_accuracy(prediction, y)
+        test_accuracy(prediction, label)
 
     print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
 
@@ -134,7 +135,7 @@ def build_model():
     model = create_the_model()
     train_dataset = train_dataset.map(pack_features_vector)
     model, train_loss_results, train_accuracy_results = train_the_model(model, train_dataset)
-#    visualize_loss_function_over_time(train_loss_results, train_accuracy_results)
+    visualize_loss_function_over_time(train_loss_results, train_accuracy_results)
 
     model.save(model_name)
     return model
@@ -157,7 +158,7 @@ if __name__ == '__main__':
 
     activation_unit = tf.nn.relu
     learn_rate = 0.01
-    num_epochs = 201
+    num_epochs = 150
     train_batch_size = 110
     test_batch_size = 30
     model_name = 'hw2_trained_model.h5'
