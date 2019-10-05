@@ -27,9 +27,9 @@ def get_dataset(url, batch_size, column_names, label_names):
 
 def create_the_model():
     model = tf.keras.Sequential([
-      tf.keras.layers.Dense(first_hidden_layer_size, activation=activation_unit, input_shape=(input_layer_size,)),
-      tf.keras.layers.Dense(second_hidden_layer_size, activation=activation_unit),
-      tf.keras.layers.Dense(output_layer_size)
+        tf.keras.layers.Dense(first_hidden_layer_size, activation=activation_unit, input_shape=(input_layer_size,)),
+        tf.keras.layers.Dense(second_hidden_layer_size, activation=activation_unit),
+        tf.keras.layers.Dense(output_layer_size)
     ])
 
     return model
@@ -132,8 +132,8 @@ def build_model():
     train_dataset = get_dataset(train_dataset_url, train_batch_size, column_names, label_name)
 #    plot_dataset(train_dataset)
 
-    model = create_the_model()
     train_dataset = train_dataset.map(pack_features_vector)
+    model = create_the_model()
     model, train_loss_results, train_accuracy_results = train_the_model(model, train_dataset)
     visualize_loss_function_over_time(train_loss_results, train_accuracy_results)
 
@@ -158,7 +158,7 @@ if __name__ == '__main__':
 
     activation_unit = tf.nn.relu
     learn_rate = 0.01
-    num_epochs = 150
+    num_epochs = 151
     train_batch_size = 110
     test_batch_size = 30
     model_name = 'hw2_trained_model.h5'
