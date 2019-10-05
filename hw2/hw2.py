@@ -27,9 +27,9 @@ def get_dataset(url, batch_size, column_names, label_names):
 
 def create_the_model():
     model = tf.keras.Sequential([
-      tf.keras.layers.Dense(10, activation=activation_unit, input_shape=(4,)),  # input shape required
-      tf.keras.layers.Dense(10, activation=activation_unit),
-      tf.keras.layers.Dense(3)
+      tf.keras.layers.Dense(first_hidden_layer_size, activation=activation_unit, input_shape=(input_layer_size,)),
+      tf.keras.layers.Dense(second_hidden_layer_size, activation=activation_unit),
+      tf.keras.layers.Dense(output_layer_size)
     ])
 
     return model
@@ -139,7 +139,6 @@ def build_model():
 #    plot_dataset(train_dataset)
 
     model = create_the_model()
-
     train_dataset = train_dataset.map(pack_features_vector)
     model, train_loss_results, train_accuracy_results = train_the_model(model, train_dataset)
 #    visualize_loss_function_over_time(train_loss_results, train_accuracy_results)
@@ -163,10 +162,9 @@ if __name__ == '__main__':
     train_dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/iris_training.csv"
     test_dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/iris_test.csv"
 
-    num_epochs = 201
-    learn_rate = 0.01
     activation_unit = tf.nn.relu
-
+    learn_rate = 0.01
+    num_epochs = 201
     train_batch_size = 110
     test_batch_size = 30
     model_name = 'hw2_trained_model.h5'
@@ -175,6 +173,11 @@ if __name__ == '__main__':
     column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
     feature_names = column_names[:-1]
     label_name = column_names[-1]
+
+    input_layer_size = len(feature_names)
+    first_hidden_layer_size = 10
+    second_hidden_layer_size = 10
+    output_layer_size = len(class_names)
 
     model = build_model()
     test_the_model(model_name)
