@@ -3,17 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from tensorflow.keras.models import load_model
 
-
-#========================= public variables ======================
-num_epochs = 201
-learn_rate = 0.01
-activation_unit = tf.nn.relu
-
-class_names = ['Iris setosa', 'Iris versicolor', 'Iris virginica']
-
-#print("Features: {}".format(feature_names))
-#print("Label: {}".format(label_name))
 
 def pack_features_vector(features, labels):
     features = tf.stack(list(features.values()), axis=1)
@@ -127,7 +118,7 @@ def evaluate_test_data(model, test_dataset):
     print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
 
 
-def make_prediction():
+def make_prediction(model, class_names):
     predict_dataset = tf.convert_to_tensor([
         [5.1, 3.3, 1.7, 0.5,],
         [5.9, 3.0, 4.2, 1.5,],
@@ -143,18 +134,7 @@ def make_prediction():
         print("Example {} prediction: {} ({:4.1f}%)".format(i, name, 100*p))
 
 
-if __name__ == '__main__':
-    train_dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/iris_training.csv"
-    test_dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/iris_test.csv"
-
-    train_batch_size = 110
-    test_batch_size = 30
-
-    column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
-    feature_names = column_names[:-1]
-    label_name = column_names[-1]
-
-#=============================== Create model =======================================
+def build_model():
     train_dataset = get_dataset(train_dataset_url, train_batch_size, column_names, label_name)
 #    plot_dataset(train_dataset)
 
@@ -162,16 +142,43 @@ if __name__ == '__main__':
 
     train_dataset = train_dataset.map(pack_features_vector)
     model, train_loss_results, train_accuracy_results = train_the_model(model, train_dataset)
+#    visualize_loss_function_over_time(train_loss_results, train_accuracy_results)
 
-    visualize_loss_function_over_time(train_loss_results, train_accuracy_results)
+    model.save(model_name)
+    return model
 
-#===============================Evaluate the model on the test dataset ========================
+
+def test_the_model(model_name):
+    model = load_model(model_name, compile=False)
+
     test_dataset = get_dataset(test_dataset_url, test_batch_size, column_names, label_name)
 #    plot_dataset(test_dataset)
     test_dataset = test_dataset.map(pack_features_vector)
     evaluate_test_data(model, test_dataset)
 
-#    make_prediction()
+#    make_prediction(model, class_names)
+
+
+if __name__ == '__main__':
+    train_dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/iris_training.csv"
+    test_dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/iris_test.csv"
+
+    num_epochs = 201
+    learn_rate = 0.01
+    activation_unit = tf.nn.relu
+
+    train_batch_size = 110
+    test_batch_size = 30
+    model_name = 'hw2_trained_model.h5'
+
+    class_names = ['Iris setosa', 'Iris versicolor', 'Iris virginica']
+    column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+    feature_names = column_names[:-1]
+    label_name = column_names[-1]
+
+    model = build_model()
+    test_the_model(model_name)
+
 
 
 
