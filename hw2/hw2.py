@@ -35,18 +35,14 @@ def create_the_model():
     return model
 
 
-def loss(model, x, y):
-  y_ = model(x)
-  loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
-  return loss_object(y_true=y, y_pred=y_)
-
-
-def gradient_function(model, inputs, targets):
+def gradient_function(model, input_features, true_output):
     with tf.GradientTape() as tape:
-        loss_value = loss(model, inputs, targets)
+        predicted_output = model(input_features)
+        loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        loss_value = loss_object(y_true=true_output, y_pred=predicted_output)
 
-    return loss_value, tape.gradient(loss_value, model.trainable_variables)
+    gradients = tape.gradient(loss_value, model.trainable_variables)
+    return loss_value, gradients
 
 
 def train_the_model(model, train_dataset):
@@ -57,17 +53,14 @@ def train_the_model(model, train_dataset):
         epoch_loss_avg = tf.keras.metrics.Mean()
         epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
 
-        for x, y in train_dataset:
-            # Optimize the model
+        for features, label in train_dataset:
+            loss_value, gradients = gradient_function(model, features, label)       # Calculate single optimization step
             optimizer = tf.keras.optimizers.Adam(learning_rate=learn_rate)
-            loss_value, grads = gradient_function(model, x, y)       # Calculate single optimization step
-            optimizer.apply_gradients(zip(grads, model.trainable_variables))
+            optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
             # Track progress
-            epoch_loss_avg(loss_value)  # Add current batch loss
-            # Compare predicted label to actual label
-            epoch_accuracy(y, model(x))
-        # End epoch
+            epoch_loss_avg(loss_value)                               # Add current batch loss
+            epoch_accuracy(label, model(features))                   # Compare predicted label to actual label
 
         train_loss_results.append(epoch_loss_avg.result())
         train_accuracy_results.append(epoch_accuracy.result())
