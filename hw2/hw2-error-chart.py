@@ -28,18 +28,20 @@ def get_dataset(url, batch_size, column_names, label_names):
 def create_the_model():
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(first_hidden_layer_size, activation=activation_unit, input_shape=(input_layer_size,)),
-        tf.keras.layers.Dense(second_hidden_layer_size, activation=activation_unit),
+#        tf.keras.layers.Dense(second_hidden_layer_size, activation=activation_unit),
         tf.keras.layers.Dense(output_layer_size)
     ])
 
     return model
 
+def loss(model, loss_object, features, true_output):
+    predicted_output = model(features)
+    return loss_object(y_true=true_output, y_pred=predicted_output)
 
-def gradient_function(model, input_features, true_output):
+
+def gradient_function(model, loss_object, input_features, true_output):
     with tf.GradientTape() as tape:
-        predicted_output = model(input_features)
-        loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-        loss_value = loss_object(y_true=true_output, y_pred=predicted_output)
+        loss_value = loss(model, loss_object,input_features, true_output)
 
     gradients = tape.gradient(loss_value, model.trainable_variables)
     return loss_value, gradients
@@ -47,33 +49,32 @@ def gradient_function(model, input_features, true_output):
 
 def train_the_model(model, train_dataset, test_dataset):
     train_loss_results = []
-    train_error_results = []
-    test_error_results = []
+    test_loss_results = []
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
     for epoch in range(num_epochs):
-        epoch_loss_avg = tf.keras.metrics.Mean()
-        epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
+        train_loss_avg = tf.keras.metrics.Mean()
+        train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
 
         for features, label in train_dataset:
-            loss_value, gradients = gradient_function(model, features, label)       # Calculate single optimization step
+            loss_value, gradients = gradient_function(model, loss_object, features, label)       # Calculate single optimization step
             optimizer = tf.keras.optimizers.Adam(learning_rate=learn_rate)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
             # Track progress
-            epoch_loss_avg(loss_value)                               # Add current batch loss
-            epoch_accuracy(label, model(features))                   # Compare predicted label to actual label
+            train_loss_avg(loss_value)                               # Add current batch loss
+            train_accuracy(label, model(features))                   # Compare predicted label to actual label
 
-        train_loss_results.append(epoch_loss_avg.result())
-        train_error_results.append(100 - epoch_accuracy.result())
+        train_loss_results.append(train_loss_avg.result())
 
-        test_accuracy = evaluate_test_data(model, test_dataset)
-        test_error_results.append(100 - test_accuracy)
+        test_loss_avg = get_test_loss_avg(model, loss_object, test_dataset)
+        test_loss_results.append(test_loss_avg.result())
 
         if epoch % 25 == 0:
-            print("Epoch {:03d}: Loss: {:.3f}, Train accuracy: {:.3%}, Test accuracy: {:.3%}".format(epoch,
-                epoch_loss_avg.result(), epoch_accuracy.result(), test_accuracy))
+            print("Epoch {:03d}: Train Loss: {:.3f}, Train accuracy: {:.3%}, Test Loss: {:.3f}".format(epoch,
+                train_loss_avg.result(), train_accuracy.result(), test_loss_avg.result()))
 
-    return model, train_loss_results, train_error_results, test_error_results
+    return model, train_loss_results, test_loss_results
 
 
 #========================================= Plots ================================
@@ -105,31 +106,26 @@ def visualize_loss_function_over_time(train_loss_results, train_accuracy_results
     plt.show()
 
 
-def error_chart(train_accuracy_results, test_accuracy_results):
-    fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
-    fig.suptitle('Training Metrics')
+def error_chart(train_lost_result, test_loss_result):
+    plt.plot(train_lost_result, label="Train error")
+    plt.plot(test_loss_result, label="Test error")
 
-    axes[0].set_ylabel("Train error", fontsize=14)
-    axes[0].plot(train_accuracy_results)
-
-    axes[1].set_ylabel("Test error", fontsize=14)
-    axes[1].set_xlabel("Epoch", fontsize=14)
-    axes[1].plot(test_accuracy_results)
+    plt.xlabel("Iteration")
+    plt.ylabel("Error")
+    plt.legend()
     plt.show()
 
 
 #============================= Testing ========================
 
-def evaluate_test_data(model, test_dataset):
-    test_accuracy = tf.keras.metrics.Accuracy()
+def get_test_loss_avg(model, loss_object, test_dataset):
+    test_loss_avg = tf.keras.metrics.Mean()
 
     for (features, label) in test_dataset:
-        logits = model(features)
-        prediction = tf.argmax(logits, axis=1, output_type=tf.int32)
-        test_accuracy(prediction, label)
+        loss_value = loss(model, loss_object, features, label)
+        test_loss_avg(loss_value)                               # Add current batch loss
 
-#    print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
-    return test_accuracy.result()
+    return test_loss_avg
 
 
 def make_prediction(model, class_names):
@@ -160,10 +156,10 @@ def build_model():
 
     train_dataset = train_dataset.map(pack_features_vector)
     model = create_the_model()
-    model, train_loss_results, train_error_results, test_error_results = train_the_model(model, train_dataset, test_dataset)
+    model, train_loss_results, test_loss_results = train_the_model(model, train_dataset, test_dataset)
 
 #    visualize_loss_function_over_time(train_loss_results, train_accuracy_results)
-    error_chart(train_error_results, test_error_results)
+    error_chart(train_loss_results, test_loss_results)
 
     model.save(model_name)
     return model
@@ -186,7 +182,7 @@ if __name__ == '__main__':
 
     activation_unit = tf.nn.relu
     learn_rate = 0.001
-    num_epochs = 251
+    num_epochs = 2000
     train_batch_size = 110
     test_batch_size = 30
     model_name = 'hw2_trained_model.h5'
