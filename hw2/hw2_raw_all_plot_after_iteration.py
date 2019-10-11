@@ -32,11 +32,12 @@ def sigmoid(wx):
 
 
 # Propagating Forward: Hidden Layer. σ ( WX )
-def hidden_layer_node_update(feature, first_hidden_layer):
+def hidden_layer_node_update(feature, first_hidden_layer, all_activation_value):
     for i in range(first_hidden_layer_size):
         wx = hidden_layer_weights[i] * feature
         sigma_wx = sigmoid(sum(wx))
         first_hidden_layer.append(sigma_wx)
+        all_activation_value.append(sigma_wx)
 
     return first_hidden_layer
 
@@ -87,38 +88,94 @@ def update_hidden_layer_weight(input_layer, hidden_delta):
             hidden_layer_weights[j][i] = hidden_layer_weights[j][i] + delta_w
 
 
-def gradient_function(predicted_output, true_output):
-    with tf.GradientTape() as tape:
-        loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-        loss_value = loss_object(y_true=true_output, y_pred=predicted_output)
+def error_chart(train_lost_result, test_loss_result):
+    plt.plot(train_lost_result, label="Train error")
+    plt.plot(test_loss_result, label="Test error")
 
-    gradients = tape.gradient(loss_value, model.trainable_variables)
-    return loss_value, gradients
+    plt.xlabel("Iteration")
+    plt.ylabel("Error")
+    plt.legend()
+    plt.show()
 
 
+def histogram_with_activation_value(all_activation_value):
+    print (len(all_activation_value))
+    bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    plt.hist(all_activation_value, bins, histtype='bar', linewidth=0)
+    plt.xticks(np.arange(0, 1.01, step=0.1))
+    plt.ylabel("Number of activation values")
+    plt.show()
+
+
+def draw_weight_changes_plot(angle_changes):
+    plt.plot(angle_changes)
+    plt.xticks(np.arange(0, 21, step=2))
+    plt.show()
+
+
+# Using least square method
 def calculate_error(predicted_value, true_value):
-    return    ((predicted_value[true_value.numpy()] - 1) * (predicted_value[true_value.numpy()] - 1))
+    return  ((predicted_value[true_value.numpy()] - 1) * (predicted_value[true_value.numpy()] - 1))
 
 
+def get_test_dataset_error(test_dataset):
+    for features, labels in test_dataset:
+        error = 0
+        all_test_activation_value = []
+        for i in range(test_batch_size):
+            input_layer = features[i]
+            label = labels[i]
 
-def train_the_model(train_dataset):
+            hidden_layer = []
+            output_layer = []
+            hidden_layer_node_update(input_layer, hidden_layer, all_test_activation_value)
+            output_layer_node_update(hidden_layer, output_layer)
+
+            error = error + calculate_error(output_layer, label) # pow((output_layer[label.numpy()] -1), 2)
+        return error/test_batch_size
+
+
+# radian = cos-1((a1b1 + a2b2)/||a|| * ||b||)
+def weight_change_angle(previous_weights, updated_weights):
+    changed_weights = previous_weights * updated_weights
+    a = 0
+    b = 0
+    total_changed_weights = 0
+    for i in range(first_hidden_layer_size):
+        for j in range(input_layer_size):
+            total_changed_weights = total_changed_weights + changed_weights[i][j]
+            a = a + (previous_weights[i][j] * previous_weights[i][j])
+            b = b + (updated_weights[i][j] * updated_weights[i][j])
+    a = math.sqrt(a)
+    b = math.sqrt(b)
+
+    radian = math.acos(total_changed_weights/(a*b))
+    degree = radian * (180/math.pi)
+    return degree
+
+
+def train_the_model(train_dataset, test_dataset):
     for features, labels in train_dataset:
+        train_errors = []
+        test_errors = []
+        all_activation_value = []
+        angle_changes = []
+
         for epoch in range(num_epochs):
             error = 0
-            train_error = []
+            previous_weights = hidden_layer_weights.copy()
+
             for i in range(train_batch_size):
                 input_layer = features[i]
                 label = labels[i]
 
                 hidden_layer = []
                 output_layer = []
-                hidden_layer_node_update(input_layer, hidden_layer)
+                hidden_layer_node_update(input_layer, hidden_layer, all_activation_value)
                 output_layer_node_update(hidden_layer, output_layer)
-    #            print(hidden_layer)
-    #            print (output_layer)
 
-                error = error + pow((output_layer[label.numpy()] -1), 2)
-#                print (error)
+                error = error + calculate_error(output_layer, label) # pow((output_layer[label.numpy()] -1), 2)
+
                 output_delta = []
                 compute_output_layer_delta(output_layer, label, output_delta)
                 update_output_layer_weight(hidden_layer, output_delta)
@@ -127,20 +184,32 @@ def train_the_model(train_dataset):
                 compute_hidden_layer_delta(hidden_layer, output_delta, hidden_delta)
                 update_hidden_layer_weight(features[i], hidden_delta)
 
-            train_error.append(error/2)
-            print ("epoch: ", epoch, "; error: ", error/2)
-    #        print (first_hidden_layer_weights)
-    #            print (output_layer_weights)
+            train_error = error/train_batch_size
+            train_errors.append(train_error)
+            test_error = get_test_dataset_error(test_dataset)
+            test_errors.append(test_error)
+            print ("epoch: ", epoch, "; train error: ", train_error, "; test error: ", test_error)
+
+            updated_weights = hidden_layer_weights.copy()
+            angle = weight_change_angle(previous_weights, updated_weights)
+            angle_changes.append(angle)
+
+            if ((epoch+1) % chart_display_frequency) == 0:
+                error_chart(train_errors, test_errors)
+                histogram_with_activation_value(all_activation_value)
+                draw_weight_changes_plot(angle_changes)
 
         break
 
 
-
 def build_model():
     train_dataset = get_dataset(train_dataset_url, train_batch_size, column_names, label_name)
-#    plot_dataset(train_dataset)
     train_dataset = train_dataset.map(pack_features_vector)
-    train_the_model(train_dataset)
+
+    test_dataset = get_dataset(test_dataset_url, test_batch_size, column_names, label_name)
+    test_dataset = test_dataset.map(pack_features_vector)
+
+    train_the_model(train_dataset, test_dataset)
 
 
 def predict():
@@ -165,7 +234,7 @@ def predict():
                 j = j+ 1
 
         break
-    print ("Currect prediction: ", j)
+    print ("Prediction accuracy: ", j)
 
 
 if __name__ == '__main__':
@@ -173,11 +242,11 @@ if __name__ == '__main__':
     test_dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/iris_test.csv"
 
     activation_unit = tf.nn.relu
-    learn_rate = 0.01
-    num_epochs = 300
+    learn_rate = 0.1
+    num_epochs = 500
     train_batch_size = 110
     test_batch_size = 30
-    model_name = 'hw2_trained_model.h5'
+    chart_display_frequency = 10
 
     class_names = ['Iris setosa', 'Iris versicolor', 'Iris virginica']
     column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
@@ -193,4 +262,4 @@ if __name__ == '__main__':
 
     build_model()
 
-    predict()
+#    predict()

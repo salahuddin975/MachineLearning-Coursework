@@ -32,11 +32,12 @@ def sigmoid(wx):
 
 
 # Propagating Forward: Hidden Layer. σ ( WX )
-def hidden_layer_node_update(feature, first_hidden_layer):
+def hidden_layer_node_update(feature, first_hidden_layer, all_activation_value):
     for i in range(first_hidden_layer_size):
         wx = hidden_layer_weights[i] * feature
         sigma_wx = sigmoid(sum(wx))
         first_hidden_layer.append(sigma_wx)
+        all_activation_value.append(sigma_wx)
 
     return first_hidden_layer
 
@@ -47,6 +48,9 @@ def output_layer_node_update(first_hidden_layer, output_layer):
         wx = output_layer_weights[i] * first_hidden_layer
         sigma_wx = sigmoid(sum(wx))
         output_layer.append(sigma_wx)
+#        all_activation_value.append(sigma_wx)
+
+    return output_layer
 
 
 # Backpropagation: Output layer delta δk = Ok (1-Ok)(tk – Ok)
@@ -103,6 +107,7 @@ def calculate_error(predicted_value, true_value):
 
 def train_the_model(train_dataset):
     for features, labels in train_dataset:
+        all_activation_value = []
         for epoch in range(num_epochs):
             error = 0
             train_error = []
@@ -112,7 +117,7 @@ def train_the_model(train_dataset):
 
                 hidden_layer = []
                 output_layer = []
-                hidden_layer_node_update(input_layer, hidden_layer)
+                hidden_layer_node_update(input_layer, hidden_layer, all_activation_value)
                 output_layer_node_update(hidden_layer, output_layer)
     #            print(hidden_layer)
     #            print (output_layer)
@@ -131,9 +136,16 @@ def train_the_model(train_dataset):
             print ("epoch: ", epoch, "; error: ", error/2)
     #        print (first_hidden_layer_weights)
     #            print (output_layer_weights)
-
+        histogram_with_activation_value(all_activation_value)
         break
 
+
+def histogram_with_activation_value(all_activation_value):
+    print (len(all_activation_value))
+    bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    plt.hist(all_activation_value, bins, histtype='bar', linewidth=0)
+    plt.xticks(np.arange(0, 1.01, step=0.1))
+    plt.show()
 
 
 def build_model():
@@ -193,4 +205,4 @@ if __name__ == '__main__':
 
     build_model()
 
-    predict()
+#    predict()

@@ -100,12 +100,12 @@ def calculate_error(predicted_value, true_value):
     return    ((predicted_value[true_value.numpy()] - 1) * (predicted_value[true_value.numpy()] - 1))
 
 
-
 def train_the_model(train_dataset):
     for features, labels in train_dataset:
+        angle_changes = []
         for epoch in range(num_epochs):
-            error = 0
-            train_error = []
+            previous_weights = hidden_layer_weights.copy()
+
             for i in range(train_batch_size):
                 input_layer = features[i]
                 label = labels[i]
@@ -114,11 +114,7 @@ def train_the_model(train_dataset):
                 output_layer = []
                 hidden_layer_node_update(input_layer, hidden_layer)
                 output_layer_node_update(hidden_layer, output_layer)
-    #            print(hidden_layer)
-    #            print (output_layer)
 
-                error = error + pow((output_layer[label.numpy()] -1), 2)
-#                print (error)
                 output_delta = []
                 compute_output_layer_delta(output_layer, label, output_delta)
                 update_output_layer_weight(hidden_layer, output_delta)
@@ -127,13 +123,40 @@ def train_the_model(train_dataset):
                 compute_hidden_layer_delta(hidden_layer, output_delta, hidden_delta)
                 update_hidden_layer_weight(features[i], hidden_delta)
 
-            train_error.append(error/2)
-            print ("epoch: ", epoch, "; error: ", error/2)
-    #        print (first_hidden_layer_weights)
-    #            print (output_layer_weights)
+            print ("epoch: ", epoch)
+
+            updated_weights = hidden_layer_weights.copy()
+            angle = get_angle(previous_weights, updated_weights)
+            angle_changes.append(angle)
+
+        print ("angle: ", angle_changes)
+        draw_weight_changes_plot(angle_changes)
 
         break
 
+# radian = cos-1((a1b1 + a2b2)/||a|| * ||b||)
+def get_angle(previous_weights, updated_weights):
+    changed_weights = previous_weights * updated_weights
+    a = 0
+    b = 0
+    total_changed_weights = 0
+    for i in range(first_hidden_layer_size):
+        for j in range(input_layer_size):
+            total_changed_weights = total_changed_weights + changed_weights[i][j]
+            a = a + (previous_weights[i][j] * previous_weights[i][j])
+            b = b + (updated_weights[i][j] * updated_weights[i][j])
+    a = math.sqrt(a)
+    b = math.sqrt(b)
+
+    radian = math.acos(total_changed_weights/(a*b))
+    degree = radian * (180/math.pi)
+    return degree
+
+
+def draw_weight_changes_plot(angle_changes):
+    plt.plot(angle_changes)
+    plt.xticks(np.arange(0, 21, step=2))
+    plt.show()
 
 
 def build_model():
@@ -174,7 +197,7 @@ if __name__ == '__main__':
 
     activation_unit = tf.nn.relu
     learn_rate = 0.01
-    num_epochs = 300
+    num_epochs = 20
     train_batch_size = 110
     test_batch_size = 30
     model_name = 'hw2_trained_model.h5'
@@ -185,7 +208,7 @@ if __name__ == '__main__':
     label_name = column_names[-1]
 
     input_layer_size = len(feature_names)
-    first_hidden_layer_size = 10
+    first_hidden_layer_size = 5
     output_layer_size = len(class_names)
 
     hidden_layer_weights = np.random.random((first_hidden_layer_size, input_layer_size))
@@ -193,4 +216,4 @@ if __name__ == '__main__':
 
     build_model()
 
-    predict()
+#    predict()

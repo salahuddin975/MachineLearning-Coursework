@@ -100,12 +100,29 @@ def calculate_error(predicted_value, true_value):
     return    ((predicted_value[true_value.numpy()] - 1) * (predicted_value[true_value.numpy()] - 1))
 
 
+def get_test_dataset_error(test_dataset):
+    for features, labels in test_dataset:
+        error = 0
+        for i in range(test_batch_size):
+            input_layer = features[i]
+            label = labels[i]
 
-def train_the_model(train_dataset):
+            hidden_layer = []
+            output_layer = []
+            hidden_layer_node_update(input_layer, hidden_layer)
+            output_layer_node_update(hidden_layer, output_layer)
+
+            error = error + pow((output_layer[label.numpy()] -1), 2)
+        return error/2
+
+
+def train_the_model(train_dataset, test_dataset):
     for features, labels in train_dataset:
+        train_errors = []
+        test_errors = []
+
         for epoch in range(num_epochs):
             error = 0
-            train_error = []
             for i in range(train_batch_size):
                 input_layer = features[i]
                 label = labels[i]
@@ -127,20 +144,36 @@ def train_the_model(train_dataset):
                 compute_hidden_layer_delta(hidden_layer, output_delta, hidden_delta)
                 update_hidden_layer_weight(features[i], hidden_delta)
 
-            train_error.append(error/2)
-            print ("epoch: ", epoch, "; error: ", error/2)
-    #        print (first_hidden_layer_weights)
-    #            print (output_layer_weights)
+            train_error = error/2
+            train_errors.append(train_error)
+            test_error = get_test_dataset_error(test_dataset)
+            test_errors.append(test_error)
+            print ("epoch: ", epoch, "; train error: ", train_error, "; test error: ", test_error)
 
+        print ("train_error: ", train_errors)
+        error_chart(train_errors, test_errors)
         break
+
+
+def error_chart(train_lost_result, test_loss_result):
+    plt.plot(train_lost_result, label="Train error")
+    plt.plot(test_loss_result, label="Test error")
+
+    plt.xlabel("Iteration")
+    plt.ylabel("Error")
+    plt.legend()
+    plt.show()
 
 
 
 def build_model():
     train_dataset = get_dataset(train_dataset_url, train_batch_size, column_names, label_name)
-#    plot_dataset(train_dataset)
     train_dataset = train_dataset.map(pack_features_vector)
-    train_the_model(train_dataset)
+
+    test_dataset = get_dataset(test_dataset_url, test_batch_size, column_names, label_name)
+    test_dataset = test_dataset.map(pack_features_vector)
+
+    train_the_model(train_dataset, test_dataset)
 
 
 def predict():
@@ -173,8 +206,8 @@ if __name__ == '__main__':
     test_dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/iris_test.csv"
 
     activation_unit = tf.nn.relu
-    learn_rate = 0.01
-    num_epochs = 300
+    learn_rate = 0.1
+    num_epochs = 500
     train_batch_size = 110
     test_batch_size = 30
     model_name = 'hw2_trained_model.h5'
@@ -193,4 +226,4 @@ if __name__ == '__main__':
 
     build_model()
 
-    predict()
+#    predict()
