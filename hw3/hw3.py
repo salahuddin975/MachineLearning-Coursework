@@ -10,6 +10,31 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+
+def plot_comparison_without_k_fold(d_tree_errors, svm_errors, sgd_errors):
+    n_groups = 2
+
+    plt.subplots()
+    index = np.arange(n_groups)
+    bar_width = 0.25
+    opacity = 0.8
+
+    plt.bar(index, d_tree_errors, bar_width, alpha=opacity, color='b', label='D-Tree')
+    plt.bar(index + bar_width, svm_errors, bar_width, alpha=opacity, color='g', label='SVM')
+    plt.bar(index + 2*bar_width, sgd_errors, bar_width, alpha=opacity, color='r', label='SGD')
+
+    plt.xlabel('Estimator')
+    plt.ylabel('Error')
+    plt.title('Comparison among different estimators')
+    plt.xticks(index + bar_width, ('Bagging', 'Boosting'))
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
 
 
 def run_bagging_model(estimator):
@@ -31,14 +56,19 @@ def run_model_only():
     svm = SVC(probability=True, kernel='linear')
     sgd = SGDClassifier(loss='hinge')
 
-    print("Bagging d_tree error: ", run_bagging_model(d_tree))
-    print("Boosting d_tree error: ", run_boosting_model(d_tree))
+    d_tree_errors = []
+    d_tree_errors.append(run_bagging_model(d_tree))
+    d_tree_errors.append(run_boosting_model(d_tree))
 
-    print("Bagging SVM error: ", run_bagging_model(svm))
-    print("Boosting SVM error: ", run_boosting_model(svm))
+    svm_errors = []
+    svm_errors.append(run_bagging_model(svm))
+    svm_errors.append(run_boosting_model(svm))
 
-    print("Bagging SGD error: ", run_bagging_model(sgd))
-    print("Boosting SGD error: ", run_boosting_model(sgd))
+    sgd_errors = []
+    sgd_errors.append(run_bagging_model(sgd))
+    sgd_errors.append(run_boosting_model(sgd))
+
+    plot_comparison_without_k_fold(d_tree_errors, svm_errors, sgd_errors)
 
 
 def run_bagging_with_cross_validation(estimator, k_fold):
@@ -71,13 +101,15 @@ def run_model_using_kfold():
 
 if __name__ == '__main__':
     dataset = pd.read_csv('ionosphere.csv')
+#    print(dataset)
+
     arr_val = dataset.values
     data = arr_val[:, 0:34]
     target = arr_val[:, 34]
-    x_train, x_test, y_train, y_test = train_test_split(data, target, test_size=0.4, random_state=0)
+    x_train, x_test, y_train, y_test = train_test_split(data, target, test_size=0.3, random_state=0)
 
     num_trees = 100
 
-#    run_model_only()
-    run_model_using_kfold()
+    run_model_only()
+#    run_model_using_kfold()
 
