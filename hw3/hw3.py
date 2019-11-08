@@ -5,6 +5,7 @@ from sklearn.svm import SVC
 from sklearn.ensemble import BaggingClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -12,7 +13,8 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import numpy as np
-
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import recall_score
 
 
 def plot_comparison_without_k_fold(d_tree_errors, svm_errors, sgd_errors):
@@ -34,6 +36,106 @@ def plot_comparison_without_k_fold(d_tree_errors, svm_errors, sgd_errors):
     plt.legend()
 
     plt.tight_layout()
+    plt.show()
+
+
+def test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_svm_train_errors, bagging_sgd_train_errors,
+                               bagging_d_tree_test_errors, bagging_svm_test_errors, bagging_sgd_test_errors,
+                               boosting_d_tree_train_errors, boosting_svm_train_errors, boosting_sgd_train_errors,
+                               boosting_d_tree_test_errors, boosting_svm_test_errors, boosting_sgd_test_errors ):
+
+    fig, ax = plt.subplots()
+    ax.plot(bagging_d_tree_train_errors, label="Bagging d-tree train errors")
+    ax.plot(bagging_d_tree_test_errors, label="Bagging d-tree test errors")
+    ax.plot(bagging_svm_train_errors, label="Bagging svm train errors")
+    ax.plot(bagging_svm_test_errors, label="Bagging svm test errors")
+    ax.plot(bagging_sgd_train_errors, label="Bagging sgd train errors")
+    ax.plot(bagging_sgd_test_errors, label="Bagging sgd test errors")
+
+    ax.plot(boosting_d_tree_train_errors, label="Boosting d-tree train errors")
+    ax.plot(boosting_d_tree_test_errors, label="Boosting d-tree test errors")
+    ax.plot(boosting_svm_train_errors, label="Boosting svm train errors")
+    ax.plot(boosting_svm_test_errors, label="Boosting svm test errors")
+    ax.plot(boosting_sgd_train_errors, label="Boosting sgd train errors")
+    ax.plot(boosting_sgd_test_errors, label="Boosting sgd test errors")
+    ax.plot(title = "Comparisons among different estimators for Bagging and Boosting")
+
+    ax.legend()
+    plt.show()
+
+
+def bagging_test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_svm_train_errors, bagging_sgd_train_errors,
+                               bagging_d_tree_test_errors, bagging_svm_test_errors, bagging_sgd_test_errors):
+
+    fig, ax = plt.subplots()
+    ax.plot(bagging_d_tree_train_errors, label="d-tree train errors")
+    ax.plot(bagging_d_tree_test_errors, label="d-tree test errors")
+    ax.plot(bagging_svm_train_errors, label="svm train errors")
+    ax.plot(bagging_svm_test_errors, label="svm test errors")
+    ax.plot(bagging_sgd_train_errors, label="sgd train errors")
+    ax.plot(bagging_sgd_test_errors, label="sgd test errors")
+    ax.plot(title = "Comparisons among different estimators using Bagging")
+
+    ax.legend()
+    plt.show()
+
+
+def boosting_test_train_error_vs_k_fold(boosting_d_tree_train_errors, boosting_svm_train_errors, boosting_sgd_train_errors,
+                               boosting_d_tree_test_errors, boosting_svm_test_errors, boosting_sgd_test_errors ):
+
+    fig, ax = plt.subplots()
+    ax.plot(boosting_d_tree_train_errors, label="d-tree train errors")
+    ax.plot(boosting_d_tree_test_errors, label="d-tree test errors")
+    ax.plot(boosting_svm_train_errors, label="svm train errors")
+    ax.plot(boosting_svm_test_errors, label="svm test errors")
+    ax.plot(boosting_sgd_train_errors, label="sgd train errors")
+    ax.plot(boosting_sgd_test_errors, label="sgd test errors")
+    ax.plot(title = "Comparisons among different estimators using Boosting")
+
+    ax.legend()
+    plt.show()
+
+
+def d_tree_test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_d_tree_test_errors,
+                                      boosting_d_tree_train_errors, boosting_d_tree_test_errors):
+
+    fig, ax = plt.subplots()
+    ax.plot(bagging_d_tree_train_errors, label="Bagging d-tree train errors")
+    ax.plot(bagging_d_tree_test_errors, label="Bagging d-tree test errors")
+    ax.plot(boosting_d_tree_train_errors, label="Boosting d-tree train errors")
+    ax.plot(boosting_d_tree_test_errors, label="Boosting d-tree test errors")
+    ax.plot(title = "Bagging Boosting comparison using d-tree")
+
+    ax.legend()
+    plt.show()
+
+
+def svm_test_train_error_vs_k_fold(bagging_svm_train_errors, bagging_svm_test_errors,
+                                   boosting_svm_train_errors, boosting_svm_test_errors):
+
+    fig, ax = plt.subplots()
+    ax.plot(bagging_svm_train_errors, label="Bagging svm train errors")
+    ax.plot(bagging_svm_test_errors, label="Bagging svm test errors")
+    ax.plot(boosting_svm_train_errors, label="Boosting svm train errors")
+    ax.plot(boosting_svm_test_errors, label="Boosting svm test errors")
+    ax.plot(title = "Bagging Boosting comparison using SVM")
+
+    ax.legend()
+    plt.show()
+
+
+def sgd_test_train_error_vs_k_fold(bagging_sgd_train_errors, bagging_sgd_test_errors,
+                                   boosting_sgd_train_errors, boosting_sgd_test_errors ):
+
+    fig, ax = plt.subplots()
+
+    ax.plot(bagging_sgd_train_errors, label="Bagging sgd train errors")
+    ax.plot(bagging_sgd_test_errors, label="Bagging sgd test errors")
+    ax.plot(boosting_sgd_train_errors, label="Boosting sgd train errors")
+    ax.plot(boosting_sgd_test_errors, label="Boosting sgd test errors")
+    ax.plot(title = "Bagging Boosting comparison using SGD")
+
+    ax.legend()
     plt.show()
 
 
@@ -72,19 +174,21 @@ def run_model_only():
 
 
 def run_bagging_with_cross_validation(estimator, k_fold):
-    kfold = KFold(n_splits=k_fold)
     clf = BaggingClassifier(base_estimator=estimator, n_estimators=num_trees)
-    scores = cross_val_score(clf, x_train, y_train, cv=kfold)
-    # Accuracy should come from test
-    return 1 - scores.mean()
+    scores = cross_validate(clf, ionosphere_data, ionosphere_target, return_train_score = True, cv=k_fold)
+    train_error = 1 - scores['train_score'].mean()
+    test_error = 1 - scores['test_score'].mean()
+
+    return train_error, test_error
 
 
 def run_boosting_with_cross_validation(estimator, k_fold):
-    kfold = KFold(n_splits=k_fold)
     clf = AdaBoostClassifier(base_estimator=estimator, n_estimators=num_trees, algorithm='SAMME')
-    scores = cross_val_score(clf, x_train, y_train, cv=kfold)
-    # Accuracy should come from test
-    return 1 - scores.mean()
+    scores = cross_validate(clf, ionosphere_data, ionosphere_target, return_train_score = True, cv=k_fold)
+    train_error = 1 - scores['train_score'].mean()
+    test_error = 1 - scores['test_score'].mean()
+
+    return train_error, test_error
 
 
 def run_model_using_kfold():
@@ -93,10 +197,65 @@ def run_model_using_kfold():
     sgd = SGDClassifier(loss='hinge')
 
     k_fold = 0
+    bagging_d_tree_train_errors = []
+    bagging_svm_train_errors = []
+    bagging_sgd_train_errors = []
+    bagging_d_tree_test_errors = []
+    bagging_svm_test_errors = []
+    bagging_sgd_test_errors = []
+
+    boosting_d_tree_train_errors = []
+    boosting_svm_train_errors = []
+    boosting_sgd_train_errors = []
+    boosting_d_tree_test_errors = []
+    boosting_svm_test_errors = []
+    boosting_sgd_test_errors = []
+
     for i in range(5):
         k_fold = k_fold + 2
-        print("k_fold: ", k_fold, ", Bagging d_tree error: ", run_bagging_with_cross_validation(d_tree, k_fold))
-        print("k_fold: ", k_fold, ", Boosting d_tree error: ", run_boosting_with_cross_validation(d_tree, k_fold))
+        scores = run_bagging_with_cross_validation(d_tree, k_fold)
+        bagging_d_tree_train_errors.append(scores[0])
+        bagging_d_tree_test_errors.append(scores[1])
+
+        scores = run_bagging_with_cross_validation(svm, k_fold)
+        bagging_svm_train_errors.append(scores[0])
+        bagging_svm_test_errors.append(scores[1])
+
+        scores = run_bagging_with_cross_validation(sgd, k_fold)
+        bagging_sgd_train_errors.append(scores[0])
+        bagging_sgd_test_errors.append(scores[1])
+
+        scores = run_boosting_with_cross_validation(d_tree, k_fold)
+        boosting_d_tree_train_errors.append(scores[0])
+        boosting_d_tree_test_errors.append(scores[1])
+
+        scores = run_boosting_with_cross_validation(svm, k_fold)
+        boosting_svm_train_errors.append(scores[0])
+        boosting_svm_test_errors.append(scores[1])
+
+        scores = run_boosting_with_cross_validation(sgd, k_fold)
+        boosting_sgd_train_errors.append(scores[0])
+        boosting_sgd_test_errors.append(scores[1])
+
+    test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_svm_train_errors, bagging_sgd_train_errors,
+                               bagging_d_tree_test_errors, bagging_svm_test_errors, bagging_sgd_test_errors,
+                               boosting_d_tree_train_errors, boosting_svm_train_errors, boosting_sgd_train_errors,
+                               boosting_d_tree_test_errors, boosting_svm_test_errors, boosting_sgd_test_errors )
+
+    bagging_test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_svm_train_errors, bagging_sgd_train_errors,
+                                           bagging_d_tree_test_errors, bagging_svm_test_errors, bagging_sgd_test_errors)
+
+    boosting_test_train_error_vs_k_fold(boosting_d_tree_train_errors, boosting_svm_train_errors, boosting_sgd_train_errors,
+                               boosting_d_tree_test_errors, boosting_svm_test_errors, boosting_sgd_test_errors )
+
+    d_tree_test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_d_tree_test_errors,
+                                      boosting_d_tree_train_errors, boosting_d_tree_test_errors)
+
+    svm_test_train_error_vs_k_fold(bagging_svm_train_errors, bagging_svm_test_errors,
+                                   boosting_svm_train_errors, boosting_svm_test_errors)
+
+    sgd_test_train_error_vs_k_fold(bagging_sgd_train_errors, bagging_sgd_test_errors,
+                                   boosting_sgd_train_errors, boosting_sgd_test_errors )
 
 
 if __name__ == '__main__':
@@ -104,12 +263,12 @@ if __name__ == '__main__':
 #    print(dataset)
 
     arr_val = dataset.values
-    data = arr_val[:, 0:34]
-    target = arr_val[:, 34]
-    x_train, x_test, y_train, y_test = train_test_split(data, target, test_size=0.3, random_state=0)
+    ionosphere_data = arr_val[:, 0:34]
+    ionosphere_target = arr_val[:, 34]
+    x_train, x_test, y_train, y_test = train_test_split(ionosphere_data, ionosphere_target, test_size=0.3, random_state=0)
 
     num_trees = 100
 
-    run_model_only()
-#    run_model_using_kfold()
+#    run_model_only()
+    run_model_using_kfold()
 
