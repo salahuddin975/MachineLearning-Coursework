@@ -44,103 +44,117 @@ def test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_svm_train_er
                                boosting_d_tree_train_errors, boosting_svm_train_errors, boosting_sgd_train_errors,
                                boosting_d_tree_test_errors, boosting_svm_test_errors, boosting_sgd_test_errors ):
 
+    x = [2, 4, 6, 8, 10]
     fig, ax = plt.subplots()
-    ax.plot(bagging_d_tree_train_errors, label="Bagging d-tree train errors")
-    ax.plot(bagging_d_tree_test_errors, label="Bagging d-tree test errors")
-    ax.plot(bagging_svm_train_errors, label="Bagging svm train errors")
-    ax.plot(bagging_svm_test_errors, label="Bagging svm test errors")
-    ax.plot(bagging_sgd_train_errors, label="Bagging sgd train errors")
-    ax.plot(bagging_sgd_test_errors, label="Bagging sgd test errors")
 
-    ax.plot(boosting_d_tree_train_errors, label="Boosting d-tree train errors")
-    ax.plot(boosting_d_tree_test_errors, label="Boosting d-tree test errors")
-    ax.plot(boosting_svm_train_errors, label="Boosting svm train errors")
-    ax.plot(boosting_svm_test_errors, label="Boosting svm test errors")
-    ax.plot(boosting_sgd_train_errors, label="Boosting sgd train errors")
-    ax.plot(boosting_sgd_test_errors, label="Boosting sgd test errors")
-    ax.plot(title = "Comparisons among different estimators for Bagging and Boosting")
+    ax.plot(x, bagging_d_tree_train_errors, label="Bagging d-tree train errors")
+    ax.plot(x, bagging_d_tree_test_errors, label="Bagging d-tree test errors")
+    ax.plot(x, bagging_svm_train_errors, label="Bagging svm train errors")
+    ax.plot(x, bagging_svm_test_errors, label="Bagging svm test errors")
+    ax.plot(x, bagging_sgd_train_errors, label="Bagging sgd train errors")
+    ax.plot(x, bagging_sgd_test_errors, label="Bagging sgd test errors")
 
-    ax.legend()
+    ax.plot(x, boosting_d_tree_train_errors, label="Boosting d-tree train errors")
+    ax.plot(x, boosting_d_tree_test_errors, label="Boosting d-tree test errors")
+    ax.plot(x, boosting_svm_train_errors, label="Boosting svm train errors")
+    ax.plot(x, boosting_svm_test_errors, label="Boosting svm test errors")
+    ax.plot(x, boosting_sgd_train_errors, label="Boosting sgd train errors")
+    ax.plot(x, boosting_sgd_test_errors, label="Boosting sgd test errors")
+    ax.legend(loc = 4, fancybox=True, framealpha=0.5)
+
+    plt.title("Comparisons among different estimators for Bagging and Boosting")
+    plt.xticks(x)
     plt.show()
 
 
 def bagging_test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_svm_train_errors, bagging_sgd_train_errors,
                                bagging_d_tree_test_errors, bagging_svm_test_errors, bagging_sgd_test_errors):
+    x = [2, 4, 6, 8, 10]
 
     fig, ax = plt.subplots()
-    ax.plot(bagging_d_tree_train_errors, label="d-tree train errors")
-    ax.plot(bagging_d_tree_test_errors, label="d-tree test errors")
-    ax.plot(bagging_svm_train_errors, label="svm train errors")
-    ax.plot(bagging_svm_test_errors, label="svm test errors")
-    ax.plot(bagging_sgd_train_errors, label="sgd train errors")
-    ax.plot(bagging_sgd_test_errors, label="sgd test errors")
-    ax.plot(title = "Comparisons among different estimators using Bagging")
+    ax.plot(x, bagging_d_tree_train_errors, label="d-tree train errors")
+    ax.plot(x, bagging_d_tree_test_errors, label="d-tree test errors")
+    ax.plot(x, bagging_svm_train_errors, label="svm train errors")
+    ax.plot(x, bagging_svm_test_errors, label="svm test errors")
+    ax.plot(x, bagging_sgd_train_errors, label="sgd train errors")
+    ax.plot(x, bagging_sgd_test_errors, label="sgd test errors")
+    ax.legend(loc = 4, fancybox=True, framealpha=0.5)
 
-    ax.legend()
+    plt.title("Comparisons among different estimators using Bagging")
+    plt.xticks(x)
     plt.show()
 
 
 def boosting_test_train_error_vs_k_fold(boosting_d_tree_train_errors, boosting_svm_train_errors, boosting_sgd_train_errors,
                                boosting_d_tree_test_errors, boosting_svm_test_errors, boosting_sgd_test_errors ):
 
+    x = [2, 4, 6, 8, 10]
     fig, ax = plt.subplots()
-    ax.plot(boosting_d_tree_train_errors, label="d-tree train errors")
-    ax.plot(boosting_d_tree_test_errors, label="d-tree test errors")
-    ax.plot(boosting_svm_train_errors, label="svm train errors")
-    ax.plot(boosting_svm_test_errors, label="svm test errors")
-    ax.plot(boosting_sgd_train_errors, label="sgd train errors")
-    ax.plot(boosting_sgd_test_errors, label="sgd test errors")
-    ax.plot(title = "Comparisons among different estimators using Boosting")
 
-    ax.legend()
+    ax.plot(x, boosting_d_tree_train_errors, label="d-tree train errors")
+    ax.plot(x, boosting_d_tree_test_errors, label="d-tree test errors")
+    ax.plot(x, boosting_svm_train_errors, label="svm train errors")
+    ax.plot(x, boosting_svm_test_errors, label="svm test errors")
+    ax.plot(x, boosting_sgd_train_errors, label="sgd train errors")
+    ax.plot(x, boosting_sgd_test_errors, label="sgd test errors")
+
+    ax.legend(loc = 4, fancybox=True, framealpha=0.5)
+    plt.xticks(x)
+    plt.title("Comparisons among different estimators using Boosting")
     plt.show()
 
 
 def d_tree_test_train_error_vs_k_fold(bagging_d_tree_train_errors, bagging_d_tree_test_errors,
                                       boosting_d_tree_train_errors, boosting_d_tree_test_errors):
+    x = [2, 4, 6, 8, 10]
 
-    fig, ax = plt.subplots()
-    ax.plot(bagging_d_tree_train_errors, label="Bagging d-tree train errors")
-    ax.plot(bagging_d_tree_test_errors, label="Bagging d-tree test errors")
-    ax.plot(boosting_d_tree_train_errors, label="Boosting d-tree train errors")
-    ax.plot(boosting_d_tree_test_errors, label="Boosting d-tree test errors")
-    ax.plot(title = "Bagging Boosting comparison using d-tree")
+    plt.plot(x, bagging_d_tree_train_errors,  label="Bagging d-tree train errors")
+    plt.plot(x, bagging_d_tree_test_errors, label="Bagging d-tree test errors")
+    plt.plot(x, boosting_d_tree_train_errors, label="Boosting d-tree train errors")
+    plt.plot(x, boosting_d_tree_test_errors, label="Boosting d-tree test errors")
 
-    ax.legend()
+    plt.title("Bagging Boosting comparison using d-tree")
+    plt.xticks(x)
+    plt.legend(loc = 4, fancybox=True, framealpha=0.5)
     plt.show()
 
 
 def svm_test_train_error_vs_k_fold(bagging_svm_train_errors, bagging_svm_test_errors,
                                    boosting_svm_train_errors, boosting_svm_test_errors):
 
-    fig, ax = plt.subplots()
-    ax.plot(bagging_svm_train_errors, label="Bagging svm train errors")
-    ax.plot(bagging_svm_test_errors, label="Bagging svm test errors")
-    ax.plot(boosting_svm_train_errors, label="Boosting svm train errors")
-    ax.plot(boosting_svm_test_errors, label="Boosting svm test errors")
-    ax.plot(title = "Bagging Boosting comparison using SVM")
 
-    ax.legend()
+    x = [2, 4, 6, 8, 10]
+    fig, ax = plt.subplots()
+    ax.plot(x, bagging_svm_train_errors, label="Bagging svm train errors")
+    ax.plot(x, bagging_svm_test_errors, label="Bagging svm test errors")
+    ax.plot(x, boosting_svm_train_errors, label="Boosting svm train errors")
+    ax.plot(x, boosting_svm_test_errors, label="Boosting svm test errors")
+    ax.legend(loc = 4, fancybox=True, framealpha=0.5)
+
+    plt.title("Bagging Boosting comparison using SVM")
+    plt.xticks(x)
     plt.show()
 
 
 def sgd_test_train_error_vs_k_fold(bagging_sgd_train_errors, bagging_sgd_test_errors,
                                    boosting_sgd_train_errors, boosting_sgd_test_errors ):
 
+    x = [2, 4, 6, 8, 10]
     fig, ax = plt.subplots()
 
-    ax.plot(bagging_sgd_train_errors, label="Bagging sgd train errors")
-    ax.plot(bagging_sgd_test_errors, label="Bagging sgd test errors")
-    ax.plot(boosting_sgd_train_errors, label="Boosting sgd train errors")
-    ax.plot(boosting_sgd_test_errors, label="Boosting sgd test errors")
-    ax.plot(title = "Bagging Boosting comparison using SGD")
+    ax.plot(x, bagging_sgd_train_errors, label="Bagging sgd train errors")
+    ax.plot(x, bagging_sgd_test_errors, label="Bagging sgd test errors")
+    ax.plot(x, boosting_sgd_train_errors, label="Boosting sgd train errors")
+    ax.plot(x, boosting_sgd_test_errors, label="Boosting sgd test errors")
 
-    ax.legend()
+    ax.legend(loc = 4, fancybox=True, framealpha=0.5)
+    plt.xticks(x)
+    plt.title("Bagging Boosting comparison using SGD")
     plt.show()
 
 
 def run_bagging_model(estimator):
-    clf = BaggingClassifier(base_estimator=estimator, n_estimators=num_trees, max_samples = 0.6)
+    clf = BaggingClassifier(base_estimator=estimator, n_estimators=num_trees, max_samples = 0.7)
     clf.fit(x_train, y_train)
     error = 1 - clf.score(x_test, y_test)
     return error
@@ -252,7 +266,7 @@ def run_model_using_kfold():
                                       boosting_d_tree_train_errors, boosting_d_tree_test_errors)
 
     svm_test_train_error_vs_k_fold(bagging_svm_train_errors, bagging_svm_test_errors,
-                                   boosting_svm_train_errors, boosting_svm_test_errors)
+                                       boosting_svm_train_errors, boosting_svm_test_errors)
 
     sgd_test_train_error_vs_k_fold(bagging_sgd_train_errors, bagging_sgd_test_errors,
                                    boosting_sgd_train_errors, boosting_sgd_test_errors )
