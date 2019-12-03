@@ -5,13 +5,13 @@ import seaborn as sns
 import missingno as msno
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import roc_curve, auc
-from sklearn.metrics import roc_auc_score
-
+from sklearn.neural_network import MLPClassifier
 
 
 class DataType(Enum):
@@ -26,6 +26,7 @@ class ClassifierName(Enum):
     LogisticRegression = 1
     KNeighborsClassifier = 2
     DecisionTreeClassifier = 3
+    NeuralNetwork = 4
 
 
 def preprocess_missing_value(df, processing_type):
@@ -86,7 +87,7 @@ def compute_roc_curve(clf, test_X,  test_Y):
     lr_probs = lr_probs[:, 1]
 
     lr_auc = roc_auc_score(test_Y, lr_probs)
-    print("ROC-AUC score: ", lr_auc)
+    print("\nROC-AUC score: ", lr_auc)
 
     ns_fpr, ns_tpr, _ = roc_curve(test_Y, ns_probs)
     lr_fpr, lr_tpr, _ = roc_curve(test_Y, lr_probs)
@@ -103,8 +104,8 @@ def compute_roc_curve(clf, test_X,  test_Y):
 def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     clf.fit(train_X, train_Y)
 
-#    print("First 25 prediction: ", clf.predict(test_X.iloc[ :25, : ]))
-#    print("First 25 target:     ", test_Y[:25].values)
+    print("First 25 prediction: ", clf.predict(test_X.iloc[ :25, : ]))
+    print("First 25 target:     ", test_Y[:25].values)
 
     print("\nTraining Accuracy: %f" % clf.score(train_X, train_Y))
     print("Test Accuracy: %f" % clf.score(test_X, test_Y))
@@ -131,6 +132,9 @@ def get_classifier(clf_name):
     elif (clf_name == ClassifierName.DecisionTreeClassifier):
         print("Using classifier: DecisionTreeClassifier (max_depth = 12)")
         clf = DecisionTreeClassifier(max_depth=12)
+    elif (clf_name == ClassifierName.NeuralNetwork):
+        print("Using classifier: NeuralNetwork (solver='adam', hidden_layer_sizes = (5, 2))")
+        clf = MLPClassifier(solver='adam', hidden_layer_sizes = (5, 2), alpha=1e-5, random_state = 1, verbose=True)
 
 #    mlp = MLPClassifier(hidden_layer_sizes=(10, 5), max_iter=150, solver='adam', verbose=True, learning_rate_init=.1)
 #    svm = SVC(probability=True, kernel='linear')
@@ -145,6 +149,6 @@ if __name__ == '__main__':
     print(train_X.shape)
     print(test_X.shape)
 
-    clf = get_classifier(ClassifierName.LogisticRegression)
+    clf = get_classifier(ClassifierName.NeuralNetwork)
     classify_dataset(clf, train_X, train_Y, test_X, test_Y)
 
