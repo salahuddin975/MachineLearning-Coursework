@@ -16,18 +16,6 @@ class MissingData(Enum):
     ReplaceWithMostFrequentData = 2  # Better
 
 
-def get_data(url, is_test_dataset):
-    feature_names = ['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status', 'occupation',
-    'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country', 'income']
-
-    if is_test_dataset == False:
-        df = pd.read_csv(url, delimiter=',', names=feature_names)
-    else:
-        df = pd.read_csv(url, delimiter=',', names=feature_names, skiprows=1)     # First row irrelevant
-
-    return df
-
-
 def preprocess_missing_value(df, processing_type):
     df.replace(' ?', np.NaN, inplace=True)           # replace ' ?' with standard np.nan
 
@@ -46,7 +34,7 @@ def preprocess_missing_value(df, processing_type):
 
 
 def preprocess_categorical_data(df):
-#    sns.countplot(y='occupation', hue='income', data=df, )      # show frequency of each category based on 'income'
+#    sns.countplot(y='occupation', hue='income', data=df)      # show frequency of each category based on 'income'
 #    plt.show()
 
     replace_map = {'income':{' >50K':1, ' <=50K':0}}

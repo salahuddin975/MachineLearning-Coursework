@@ -16,18 +16,6 @@ class MissingData(Enum):
     ReplaceWithMostFrequentData = 2  # Better
 
 
-def get_data(url, is_test_dataset):
-    feature_names = ['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status', 'occupation',
-    'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country', 'income']
-
-    if is_test_dataset == False:
-        df = pd.read_csv(url, delimiter=',', names=feature_names)
-    else:
-        df = pd.read_csv(url, delimiter=',', names=feature_names, skiprows=1)     # First row irrelevant
-
-    return df
-
-
 def preprocess_missing_value(df, processing_type):
     df.replace(' ?', np.NaN, inplace=True)           # replace ' ?' with standard np.nan
 
@@ -46,10 +34,14 @@ def preprocess_missing_value(df, processing_type):
 
 
 def preprocess_categorical_data(df):
+#    sns.countplot(y='occupation', hue='income', data=df)      # show frequency of each category based on 'income'
+#    plt.show()
+
     replace_map = {'income':{' >50K':1, ' <=50K':0}}
     df.replace(replace_map, inplace=True)
 
-    df = df.apply(preprocessing.LabelEncoder().fit_transform)
+    df = df.apply(preprocessing.LabelEncoder().fit_transform)   # Replace with index after sorting feature
+
     return df
 
 
@@ -80,7 +72,6 @@ def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     clf.fit(train_X, train_Y)
     print("Training set score: %f" % clf.score(train_X, train_Y))
     print("Test set score: %f" % clf.score(test_X, test_Y))
-
 
 
 if __name__ == '__main__':
