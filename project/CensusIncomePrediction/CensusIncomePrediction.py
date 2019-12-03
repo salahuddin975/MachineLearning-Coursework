@@ -1,10 +1,13 @@
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
+from enum import Enum
 import seaborn as sns
 import missingno as msno
+from sklearn import preprocessing
 import matplotlib.pyplot as plt
-from enum import Enum
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 
 class DataType(Enum):
@@ -15,6 +18,10 @@ class MissingData(Enum):
     Remove = 1                       # Not good approach
     ReplaceWithMostFrequentData = 2  # Better
 
+class ClassifierName(Enum):
+    LogisticRegression = 1
+    KNeighborsClassifier = 2
+    DecisionTreeClassifier = 3
 
 def preprocess_missing_value(df, processing_type):
     df.replace(' ?', np.NaN, inplace=True)           # replace ' ?' with standard np.nan
@@ -70,8 +77,31 @@ def get_data(data_type):
 
 def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     clf.fit(train_X, train_Y)
-    print("Training set score: %f" % clf.score(train_X, train_Y))
-    print("Test set score: %f" % clf.score(test_X, test_Y))
+
+    print("predict: ", clf.predict(test_X.iloc[ :25, : ]))
+    print("target: ", test_Y[:25].values)
+
+    print("Training Accuracy: %f" % clf.score(train_X, train_Y))
+    print("Test Accuracy: %f" % clf.score(test_X, test_Y))
+
+
+def get_classifier(clf_name):
+    clf = ""
+
+    if (clf_name == ClassifierName.KNeighborsClassifier):
+        print("Using classifier: KNeighborsClassifier")
+        clf = KNeighborsClassifier()
+    elif (clf_name == ClassifierName.LogisticRegression):
+        print("Using classifier: LogisticRegression")
+        clf = LogisticRegression(solver='lbfgs', max_iter=400)
+    elif (clf_name == ClassifierName.DecisionTreeClassifier):
+        print("Using classifier: DecisionTreeClassifier")
+        clf = DecisionTreeClassifier(max_depth=12)
+
+#    mlp = MLPClassifier(hidden_layer_sizes=(10, 5), max_iter=150, solver='adam', verbose=True, learning_rate_init=.1)
+#    svm = SVC(probability=True, kernel='linear')
+
+    return clf
 
 
 if __name__ == '__main__':
@@ -79,12 +109,8 @@ if __name__ == '__main__':
     test_X, test_Y = get_data(DataType.Test)
 
     print(train_X.shape)
-#    print(test_X.shape)
+    print(test_X.shape)
 
-#    mlp = MLPClassifier(hidden_layer_sizes=(10, 5), max_iter=150, solver='adam', verbose=True, learning_rate_init=.1)
-#    d_tree = DecisionTreeClassifier(max_depth=15, min_samples_leaf=1)
-#    svm = SVC(probability=True, kernel='linear')
-
-#    classify_dataset(svm, train_X, train_Y, test_X, test_Y)
-
+    clf = get_classifier(ClassifierName.DecisionTreeClassifier)
+    classify_dataset(clf, train_X, train_Y, test_X, test_Y)
 
