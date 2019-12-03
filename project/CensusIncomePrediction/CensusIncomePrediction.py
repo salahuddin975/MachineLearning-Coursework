@@ -9,6 +9,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_auc_score
+
 
 
 class DataType(Enum):
@@ -46,7 +49,7 @@ def preprocess_categorical_data(df):
 #    sns.countplot(y='occupation', hue='income', data=df)      # show frequency of each category based on 'income'
 #    plt.show()
 
-    replace_map = {'income':{' >50K':1, ' <=50K':0}}
+    replace_map = {'income':{' <=50K':0, ' >50K':1}}
     df.replace(replace_map, inplace=True)
 
     df = df.apply(preprocessing.LabelEncoder().fit_transform)   # Replace with index after sorting feature
@@ -77,11 +80,31 @@ def get_data(data_type, action_for_missing_value):
     return data, target
 
 
+def compute_roc_curve(clf, test_X,  test_Y):
+    ns_probs = [0 for _ in range(len(test_Y))]
+    lr_probs = clf.predict_proba(test_X)
+    lr_probs = lr_probs[:, 1]
+
+    lr_auc = roc_auc_score(test_Y, lr_probs)
+    print("ROC-AUC score: ", lr_auc)
+
+    ns_fpr, ns_tpr, _ = roc_curve(test_Y, ns_probs)
+    lr_fpr, lr_tpr, _ = roc_curve(test_Y, lr_probs)
+
+    plt.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
+    plt.plot(lr_fpr, lr_tpr, marker='.', label='Classifier')
+
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend()
+    plt.show()
+
+
 def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     clf.fit(train_X, train_Y)
 
 #    print("First 25 prediction: ", clf.predict(test_X.iloc[ :25, : ]))
-#    print("First 25 target: ", test_Y[:25].values)
+#    print("First 25 target:     ", test_Y[:25].values)
 
     print("\nTraining Accuracy: %f" % clf.score(train_X, train_Y))
     print("Test Accuracy: %f" % clf.score(test_X, test_Y))
@@ -92,6 +115,8 @@ def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     print("00(true negative, <=50K)   01(false positive)")
     print("10(false negative)         11(true positive, >50K)")
     print(confusion_matrix(y_true, y_pred))
+
+    compute_roc_curve(clf, test_X,  test_Y)
 
 
 def get_classifier(clf_name):
@@ -120,6 +145,6 @@ if __name__ == '__main__':
     print(train_X.shape)
     print(test_X.shape)
 
-    clf = get_classifier(ClassifierName.DecisionTreeClassifier)
+    clf = get_classifier(ClassifierName.LogisticRegression)
     classify_dataset(clf, train_X, train_Y, test_X, test_Y)
 
