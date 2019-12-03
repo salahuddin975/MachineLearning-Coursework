@@ -46,10 +46,14 @@ def preprocess_missing_value(df, processing_type):
 
 
 def preprocess_categorical_data(df):
+#    sns.countplot(y='occupation', hue='income', data=df, )      # show frequency of each category based on 'income'
+#    plt.show()
+
     replace_map = {'income':{' >50K':1, ' <=50K':0}}
     df.replace(replace_map, inplace=True)
 
-    df = df.apply(preprocessing.LabelEncoder().fit_transform)
+    df = df.apply(preprocessing.LabelEncoder().fit_transform)   # Replace with index after sorting feature
+
     return df
 
 
