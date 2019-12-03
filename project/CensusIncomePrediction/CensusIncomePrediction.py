@@ -16,13 +16,14 @@ class DataType(Enum):
    Test = 2
 
 class MissingData(Enum):
-    Remove = 1                       # Not good approach
+    RemoveEntireExample = 1                       # Not good approach
     ReplaceWithMostFrequentData = 2  # Better
 
 class ClassifierName(Enum):
     LogisticRegression = 1
     KNeighborsClassifier = 2
     DecisionTreeClassifier = 3
+
 
 def preprocess_missing_value(df, processing_type):
     df.replace(' ?', np.NaN, inplace=True)           # replace ' ?' with standard np.nan
@@ -31,7 +32,7 @@ def preprocess_missing_value(df, processing_type):
 #    msno.matrix(df, figsize=(10, 6), fontsize=7)     # Plot of missing data
 #    plt.show()
 
-    if (processing_type == MissingData.Remove):
+    if (processing_type == MissingData.RemoveEntireExample):
         print("Remove all examples with missing value")
         df.dropna(inplace=True)
     if (processing_type == MissingData.ReplaceWithMostFrequentData):
@@ -53,7 +54,7 @@ def preprocess_categorical_data(df):
     return df
 
 
-def get_data(data_type):
+def get_data(data_type, action_for_missing_value):
     train_url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
     test_url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test"
 
@@ -68,7 +69,7 @@ def get_data(data_type):
 #    print(df.shape)
 #    df.info()
 
-    df = preprocess_missing_value(df, MissingData.ReplaceWithMostFrequentData)        # replace with most frequent data (better)
+    df = preprocess_missing_value(df, action_for_missing_value)
     df = preprocess_categorical_data(df)
 
     data = df.iloc[:, 0:14]
@@ -100,10 +101,10 @@ def get_classifier(clf_name):
         print("Using classifier: KNeighborsClassifier")
         clf = KNeighborsClassifier()
     elif (clf_name == ClassifierName.LogisticRegression):
-        print("Using classifier: LogisticRegression")
+        print("Using classifier: LogisticRegression (solver='lbfgs', max_iter=400)")
         clf = LogisticRegression(solver='lbfgs', max_iter=400)
     elif (clf_name == ClassifierName.DecisionTreeClassifier):
-        print("Using classifier: DecisionTreeClassifier")
+        print("Using classifier: DecisionTreeClassifier (max_depth = 12)")
         clf = DecisionTreeClassifier(max_depth=12)
 
 #    mlp = MLPClassifier(hidden_layer_sizes=(10, 5), max_iter=150, solver='adam', verbose=True, learning_rate_init=.1)
@@ -113,8 +114,8 @@ def get_classifier(clf_name):
 
 
 if __name__ == '__main__':
-    train_X, train_Y = get_data(DataType.Train)
-    test_X, test_Y = get_data(DataType.Test)
+    train_X, train_Y = get_data(DataType.Train, MissingData.ReplaceWithMostFrequentData)
+    test_X, test_Y = get_data(DataType.Test, MissingData.ReplaceWithMostFrequentData)
 
     print(train_X.shape)
     print(test_X.shape)
