@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import confusion_matrix
 
 
 class DataType(Enum):
@@ -27,7 +28,7 @@ def preprocess_missing_value(df, processing_type):
     df.replace(' ?', np.NaN, inplace=True)           # replace ' ?' with standard np.nan
 
 #    print(df.isnull().sum())                         # Count missing values per attribute
-#    msno.matrix(df, figsize=(10, 6), fontsize=7)     # Plot missing data
+#    msno.matrix(df, figsize=(10, 6), fontsize=7)     # Plot of missing data
 #    plt.show()
 
     if (processing_type == MissingData.Remove):
@@ -78,15 +79,22 @@ def get_data(data_type):
 def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     clf.fit(train_X, train_Y)
 
-    print("predict: ", clf.predict(test_X.iloc[ :25, : ]))
-    print("target: ", test_Y[:25].values)
+#    print("First 25 prediction: ", clf.predict(test_X.iloc[ :25, : ]))
+#    print("First 25 target: ", test_Y[:25].values)
 
-    print("Training Accuracy: %f" % clf.score(train_X, train_Y))
+    print("\nTraining Accuracy: %f" % clf.score(train_X, train_Y))
     print("Test Accuracy: %f" % clf.score(test_X, test_Y))
+
+    y_true = test_Y.values
+    y_pred = clf.predict(test_X)
+    print("\nConfusion matrix: ")
+    print("00(true negative, <=50K)   01(false positive)")
+    print("10(false negative)         11(true positive, >50K)")
+    print(confusion_matrix(y_true, y_pred))
 
 
 def get_classifier(clf_name):
-    clf = ""
+    clf = None
 
     if (clf_name == ClassifierName.KNeighborsClassifier):
         print("Using classifier: KNeighborsClassifier")
