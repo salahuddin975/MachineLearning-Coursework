@@ -197,6 +197,14 @@ def separate_wrong_predicted_examples(X, Y, predictions):
     return X_correct, Y_correct, X_wrong, Y_wrong
 
 
+def work_with_weak_pattern(X_train, Y_train, train_predictions, X_test, Y_test, test_predictions):
+    X_train_correct, Y_train_correct, X_train_wrong, Y_train_wrong = separate_wrong_predicted_examples(X_train, Y_train, train_predictions)
+    X_test_correct, Y_test_correct, X_test_wrong, Y_test_wrong = separate_wrong_predicted_examples(X_test, Y_test, test_predictions)
+
+    clf_weak_pattern, name = get_classifier(ClassifierName.NeuralNetwork)
+    predictions = classify_dataset(clf_weak_pattern, X_train_wrong, Y_train_wrong, X_test_wrong, Y_test_wrong)
+
+
 if __name__ == '__main__':
     X_train, Y_train = get_data(DataType.Train, MissingData.ReplaceWithMostFrequentData)
     X_test, Y_test = get_data(DataType.Test, MissingData.ReplaceWithMostFrequentData)
@@ -209,9 +217,5 @@ if __name__ == '__main__':
     clf, name = get_classifier(ClassifierName.NaiveBayes)
     train_predictions, test_predictions = classify_dataset(clf, X_train, Y_train, X_test, Y_test)
 
-    X_train_correct, Y_train_correct, X_train_wrong, Y_train_wrong = separate_wrong_predicted_examples(X_train, Y_train, train_predictions)
-    X_test_correct, Y_test_correct, X_test_wrong, Y_test_wrong = separate_wrong_predicted_examples(X_test, Y_test, test_predictions)
-
-    clf_wrong, name = get_classifier(ClassifierName.NeuralNetwork)
-    predictions = classify_dataset(clf_wrong, X_train_wrong, Y_train_wrong, X_test_wrong, Y_test_wrong)
+    work_with_weak_pattern(X_train, Y_train, train_predictions, X_test, Y_test, test_predictions)
 
