@@ -4,14 +4,17 @@ from enum import Enum
 import seaborn as sns
 import missingno as msno
 from sklearn import preprocessing
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
+
 
 
 class DataType(Enum):
@@ -25,8 +28,9 @@ class MissingData(Enum):
 class ClassifierName(Enum):
     LogisticRegression = 1
     KNeighborsClassifier = 2
-    DecisionTreeClassifier = 3
-    NeuralNetwork = 4
+    SVM = 3
+    DecisionTreeClassifier = 4
+    NeuralNetwork = 5
 
 
 def preprocess_missing_value(df, processing_type):
@@ -56,6 +60,15 @@ def preprocess_categorical_data(df):
     df = df.apply(preprocessing.LabelEncoder().fit_transform)   # Replace with index after sorting feature
 
     return df
+
+
+def scaler_trainsform(X_train, X_test):
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    X_train = scaler.transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    return X_train, X_test
 
 
 def get_data(data_type, action_for_missing_value):
@@ -104,7 +117,7 @@ def compute_roc_curve(clf, test_X,  test_Y):
 def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     clf.fit(train_X, train_Y)
 
-    print("First 25 prediction: ", clf.predict(test_X.iloc[ :25, : ]))
+    print("First 25 prediction: ", clf.predict(test_X[ :25, : ]))
     print("First 25 target:     ", test_Y[:25].values)
 
     print("\nTraining Accuracy: %f" % clf.score(train_X, train_Y))
@@ -129,26 +142,28 @@ def get_classifier(clf_name):
     elif (clf_name == ClassifierName.LogisticRegression):
         print("Using classifier: LogisticRegression (solver='lbfgs', max_iter=400)")
         clf = LogisticRegression(solver='lbfgs', max_iter=400)
+    elif (clf_name == ClassifierName.SVM):
+        print("Using classifier: SVM (kernel='rbf', probability=True, gamma='scale')")
+        clf = svm.SVC(kernel='rbf', probability=True, gamma='scale')
     elif (clf_name == ClassifierName.DecisionTreeClassifier):
         print("Using classifier: DecisionTreeClassifier (max_depth = 12)")
         clf = DecisionTreeClassifier(max_depth=12)
     elif (clf_name == ClassifierName.NeuralNetwork):
         print("Using classifier: NeuralNetwork (solver='adam', hidden_layer_sizes = (5, 2))")
-        clf = MLPClassifier(solver='adam', hidden_layer_sizes = (5, 2), alpha=1e-5, random_state = 1, verbose=True)
-
-#    mlp = MLPClassifier(hidden_layer_sizes=(10, 5), max_iter=150, solver='adam', verbose=True, learning_rate_init=.1)
-#    svm = SVC(probability=True, kernel='linear')
+        clf = MLPClassifier(solver='adam', hidden_layer_sizes = (5, 2), alpha=1e-5, random_state = 1)  # (5, 2) works better
 
     return clf
 
 
 if __name__ == '__main__':
-    train_X, train_Y = get_data(DataType.Train, MissingData.ReplaceWithMostFrequentData)
-    test_X, test_Y = get_data(DataType.Test, MissingData.ReplaceWithMostFrequentData)
+    X_train, Y_train = get_data(DataType.Train, MissingData.ReplaceWithMostFrequentData)
+    X_test, Y_test = get_data(DataType.Test, MissingData.ReplaceWithMostFrequentData)
 
-    print(train_X.shape)
-    print(test_X.shape)
+    print(X_train.shape)
+    print(X_test.shape)
 
-    clf = get_classifier(ClassifierName.NeuralNetwork)
-    classify_dataset(clf, train_X, train_Y, test_X, test_Y)
+    X_train, X_test = scaler_trainsform(X_train, X_test)       # Mandatory for SVM; Works better for Neural Network
+
+    clf = get_classifier(ClassifierName.SVM)
+    classify_dataset(clf, X_train, Y_train, X_test, Y_test)
 
