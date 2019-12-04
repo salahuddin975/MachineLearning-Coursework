@@ -17,14 +17,13 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 
 
-
 class DataType(Enum):
    Train = 1
    Test = 2
 
 class MissingData(Enum):
-    RemoveEntireExample = 1                       # Not good approach
-    ReplaceWithMostFrequentData = 2  # Better
+    RemoveEntireExample = 1               # Not very good approach
+    ReplaceWithMostFrequentData = 2       # Better
 
 class ClassifierName(Enum):
     LogisticRegression = 1
@@ -114,7 +113,7 @@ def compute_roc_curve(clf, test_X,  test_Y):
     probs = probs[:, 1]
 
     roc_score = roc_auc_score(test_Y, probs)
-    print("\nROC-AUC score: ", roc_score)
+    print("ROC-AUC score: ", roc_score)
     fpr, tpr, _ = roc_curve(test_Y, probs)
 
     return roc_score, [fpr, tpr]
@@ -133,7 +132,7 @@ def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
 
     y_true = test_Y.values
     y_pred = clf.predict(test_X)
-    print("\nConfusion matrix: ")
+    print("Confusion matrix: ")
     cm_score = confusion_matrix(y_true, y_pred)
     print(cm_score)
 
@@ -177,9 +176,9 @@ if __name__ == '__main__':
     print(X_train.shape)
     print(X_test.shape)
 
-    X_train, X_test = scaler_trainsform(X_train, X_test)  # Mandatory for SVM; Works better for Neural Network
-    comparison_table = PrettyTable(['Classifier', 'TrainAccuracy', 'TestAccuracy',
-                                    'TrueNegative(00) <=50K', 'FalsePositive(01)', 'FalseNegative(10)', 'TruePositive(11) >50K', 'ROC_Score'])
+    X_train, X_test = scaler_trainsform(X_train, X_test)       # Mandatory for SVM; Works better for Neural Network
+    comparison_table = PrettyTable(['Classifier', 'TrainAccuracy', 'TestAccuracy', 'TrueNegative(00) <=50K',
+                                    'FalsePositive(01)', 'FalseNegative(10)', 'TruePositive(11) >50K', 'ROC_Score'])
     roc_info = []
 
     for clf_name in ClassifierName:
@@ -195,3 +194,5 @@ if __name__ == '__main__':
     print("Comparison among all classifiers:")
     print(comparison_table)
     draw_roc_comparison_plot(roc_info, Y_test)
+
+    
