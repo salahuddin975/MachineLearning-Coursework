@@ -3,6 +3,7 @@ import pandas as pd
 from enum import Enum
 import seaborn as sns
 import missingno as msno
+from prettytable import PrettyTable
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
@@ -99,8 +100,8 @@ def compute_roc_curve(clf, test_X,  test_Y):
     lr_probs = clf.predict_proba(test_X)
     lr_probs = lr_probs[:, 1]
 
-    lr_auc = roc_auc_score(test_Y, lr_probs)
-    print("\nROC-AUC score: ", lr_auc)
+    roc_score = roc_auc_score(test_Y, lr_probs)
+    print("\nROC-AUC score: ", roc_score)
 
     ns_fpr, ns_tpr, _ = roc_curve(test_Y, ns_probs)
     lr_fpr, lr_tpr, _ = roc_curve(test_Y, lr_probs)
@@ -111,7 +112,9 @@ def compute_roc_curve(clf, test_X,  test_Y):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.legend()
-    plt.show()
+#    plt.show()
+
+    return roc_score
 
 
 def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
@@ -120,39 +123,48 @@ def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     print("First 25 prediction: ", clf.predict(test_X[ :25, : ]))
     print("First 25 target:     ", test_Y[:25].values)
 
-    print("\nTraining Accuracy: %f" % clf.score(train_X, train_Y))
-    print("Test Accuracy: %f" % clf.score(test_X, test_Y))
+    train_score = clf.score(train_X, train_Y)
+    test_score = clf.score(test_X, test_Y)
+    print("\nTraining Accuracy: %f" % train_score)
+    print("Test Accuracy: %f" % test_score)
 
     y_true = test_Y.values
     y_pred = clf.predict(test_X)
     print("\nConfusion matrix: ")
-    print("00(true negative, <=50K)   01(false positive)")
-    print("10(false negative)         11(true positive, >50K)")
-    print(confusion_matrix(y_true, y_pred))
+    cm_score = confusion_matrix(y_true, y_pred)
+    print(cm_score)
 
-    compute_roc_curve(clf, test_X,  test_Y)
+    roc_score = compute_roc_curve(clf, test_X,  test_Y)
+
+    return [train_score, test_score, cm_score[0][0], cm_score[0][1], cm_score[1][0], cm_score[1][1], roc_score]
 
 
 def get_classifier(clf_name):
     clf = None
+    name = ""
 
     if (clf_name == ClassifierName.KNeighborsClassifier):
-        print("Using classifier: KNeighborsClassifier")
+        print("\nUsing classifier: KNeighborsClassifier")
+        name = "KNeighborsClassifier"
         clf = KNeighborsClassifier()
     elif (clf_name == ClassifierName.LogisticRegression):
-        print("Using classifier: LogisticRegression (solver='lbfgs', max_iter=400)")
+        print("\nUsing classifier: LogisticRegression (solver='lbfgs', max_iter=400)")
+        name = "LogisticRegression"
         clf = LogisticRegression(solver='lbfgs', max_iter=400)
     elif (clf_name == ClassifierName.SVM):
-        print("Using classifier: SVM (kernel='rbf', probability=True, gamma='scale')")
+        print("\nUsing classifier: SVM (kernel='rbf', probability=True, gamma='scale')")
+        name = "SVM"
         clf = svm.SVC(kernel='rbf', probability=True, gamma='scale')
     elif (clf_name == ClassifierName.DecisionTreeClassifier):
-        print("Using classifier: DecisionTreeClassifier (max_depth = 12)")
+        print("\nUsing classifier: DecisionTreeClassifier (max_depth = 12)")
+        name = "DecisionTree"
         clf = DecisionTreeClassifier(max_depth=12)
     elif (clf_name == ClassifierName.NeuralNetwork):
-        print("Using classifier: NeuralNetwork (solver='adam', hidden_layer_sizes = (5, 2))")
+        print("\nUsing classifier: NeuralNetwork (solver='adam', hidden_layer_sizes = (5, 2))")
+        name = "NeuralNetwork"
         clf = MLPClassifier(solver='adam', hidden_layer_sizes = (5, 2), alpha=1e-5, random_state = 1)  # (5, 2) works better
 
-    return clf
+    return clf, name
 
 
 if __name__ == '__main__':
@@ -162,8 +174,14 @@ if __name__ == '__main__':
     print(X_train.shape)
     print(X_test.shape)
 
-    X_train, X_test = scaler_trainsform(X_train, X_test)       # Mandatory for SVM; Works better for Neural Network
+    X_train, X_test = scaler_trainsform(X_train, X_test)  # Mandatory for SVM; Works better for Neural Network
+    comparison_table = PrettyTable(['Classifier', 'TrainAccuracy', 'TestAccuracy',
+                                    'TrueNegative(00) <=50K', 'FalsePositive(01)', 'FalseNegative(10)', 'TruePositive(11) >50K', 'ROC_Score'])
 
-    clf = get_classifier(ClassifierName.SVM)
-    classify_dataset(clf, X_train, Y_train, X_test, Y_test)
+    for clf_name in ClassifierName:
+        clf, name = get_classifier(clf_name)
+        scores = classify_dataset(clf, X_train, Y_train, X_test, Y_test)
+        scores.insert(0, name)
+        comparison_table.add_row(scores)
 
+    print(comparison_table)
