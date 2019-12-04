@@ -173,21 +173,28 @@ def get_classifier(clf_name):
 
 def separate_wrong_predicted_examples(X, Y, predictions):
     correctly_classified = []
+    wrongly_classified = []
     Y = Y.values
 
     for i in range(len(predictions)):
-        if(predictions[i] ^ Y[i] == 0):
+        if(predictions[i] ^ Y[i]):
+            wrongly_classified.append(i)
+        else:
             correctly_classified.append(i)
 
     print("correctly classified: ", len(correctly_classified))
 
-    X = np.delete(X, correctly_classified, axis=0)
-    Y = np.delete(Y, correctly_classified, axis=0)
-#    Y.drop(Y.index[correctly_classified], inplace=True)
-    print("shape, X_train: ", X.shape)
-    print("shape, Y_train: ", Y.shape)
+    X_correct = np.delete(X, wrongly_classified, axis=0)
+    Y_correct = np.delete(Y, wrongly_classified, axis=0)
+    X_wrong = np.delete(X, correctly_classified, axis=0)
+    Y_wrong = np.delete(Y, correctly_classified, axis=0)
 
-    return X, Y
+    print("shape, X_correct: ", X_correct.shape)
+    print("shape, Y_correct: ", Y_correct.shape)
+    print("shape, X_wrong: ", X_wrong.shape)
+    print("shape, Y_wrong: ", Y_wrong.shape)
+
+    return X_correct, Y_correct, X_wrong, Y_wrong
 
 
 if __name__ == '__main__':
@@ -202,8 +209,8 @@ if __name__ == '__main__':
     clf, name = get_classifier(ClassifierName.NaiveBayes)
     train_predictions, test_predictions = classify_dataset(clf, X_train, Y_train, X_test, Y_test)
 
-    X_train_wrong, Y_train_wrong = separate_wrong_predicted_examples(X_train, Y_train, train_predictions)
-    X_test_wrong, Y_test_wrong = separate_wrong_predicted_examples(X_test, Y_test, test_predictions)
+    X_train_correct, Y_train_correct, X_train_wrong, Y_train_wrong = separate_wrong_predicted_examples(X_train, Y_train, train_predictions)
+    X_test_correct, Y_test_correct, X_test_wrong, Y_test_wrong = separate_wrong_predicted_examples(X_test, Y_test, test_predictions)
 
     clf_wrong, name = get_classifier(ClassifierName.NeuralNetwork)
     predictions = classify_dataset(clf_wrong, X_train_wrong, Y_train_wrong, X_test_wrong, Y_test_wrong)
