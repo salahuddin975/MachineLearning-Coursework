@@ -95,26 +95,29 @@ def get_data(data_type, action_for_missing_value):
     return data, target
 
 
-def compute_roc_curve(clf, test_X,  test_Y):
-    ns_probs = [0 for _ in range(len(test_Y))]
-    lr_probs = clf.predict_proba(test_X)
-    lr_probs = lr_probs[:, 1]
-
-    roc_score = roc_auc_score(test_Y, lr_probs)
-    print("\nROC-AUC score: ", roc_score)
-
-    ns_fpr, ns_tpr, _ = roc_curve(test_Y, ns_probs)
-    lr_fpr, lr_tpr, _ = roc_curve(test_Y, lr_probs)
-
+def draw_roc_comparison_plot(roc_info, Y_test):
+    ns_probs = [0 for _ in range(len(Y_test))]
+    ns_fpr, ns_tpr, _ = roc_curve(Y_test, ns_probs)
     plt.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
-    plt.plot(lr_fpr, lr_tpr, marker='.', label='Classifier')
+
+    for roc_value in roc_info:
+        plt.plot(roc_value[1], roc_value[2], label=roc_value[0])
 
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.legend()
-#    plt.show()
+    plt.show()
 
-    return roc_score
+
+def compute_roc_curve(clf, test_X,  test_Y):
+    probs = clf.predict_proba(test_X)
+    probs = probs[:, 1]
+
+    roc_score = roc_auc_score(test_Y, probs)
+    print("\nROC-AUC score: ", roc_score)
+    fpr, tpr, _ = roc_curve(test_Y, probs)
+
+    return roc_score, [fpr, tpr]
 
 
 def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
@@ -134,9 +137,9 @@ def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
     cm_score = confusion_matrix(y_true, y_pred)
     print(cm_score)
 
-    roc_score = compute_roc_curve(clf, test_X,  test_Y)
+    roc_score, plot_info = compute_roc_curve(clf, test_X,  test_Y)
 
-    return [train_score, test_score, cm_score[0][0], cm_score[0][1], cm_score[1][0], cm_score[1][1], roc_score]
+    return [train_score, test_score, cm_score[0][0], cm_score[0][1], cm_score[1][0], cm_score[1][1], roc_score], plot_info
 
 
 def get_classifier(clf_name):
@@ -177,11 +180,18 @@ if __name__ == '__main__':
     X_train, X_test = scaler_trainsform(X_train, X_test)  # Mandatory for SVM; Works better for Neural Network
     comparison_table = PrettyTable(['Classifier', 'TrainAccuracy', 'TestAccuracy',
                                     'TrueNegative(00) <=50K', 'FalsePositive(01)', 'FalseNegative(10)', 'TruePositive(11) >50K', 'ROC_Score'])
+    roc_info = []
 
     for clf_name in ClassifierName:
         clf, name = get_classifier(clf_name)
-        scores = classify_dataset(clf, X_train, Y_train, X_test, Y_test)
+        scores, roc_value = classify_dataset(clf, X_train, Y_train, X_test, Y_test)
+
         scores.insert(0, name)
         comparison_table.add_row(scores)
 
+        roc_value.insert(0, name)
+        roc_info.append(roc_value)
+
+    print("Comparison among all classifiers:")
     print(comparison_table)
+    draw_roc_comparison_plot(roc_info, Y_test)
