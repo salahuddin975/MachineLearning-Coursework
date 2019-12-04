@@ -15,6 +15,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.naive_bayes import GaussianNB
 
 
 class DataType(Enum):
@@ -26,11 +27,12 @@ class MissingData(Enum):
     ReplaceWithMostFrequentData = 2       # Better
 
 class ClassifierName(Enum):
-    LogisticRegression = 1
-    KNeighborsClassifier = 2
-    SVM = 3
-    DecisionTreeClassifier = 4
-    NeuralNetwork = 5
+    NaiveBayes = 1
+    LogisticRegression = 2
+    KNeighborsClassifier = 3
+    SVM = 4
+    DecisionTreeClassifier = 5
+    NeuralNetwork = 6
 
 
 def preprocess_missing_value(df, processing_type):
@@ -127,7 +129,7 @@ def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
 
     train_score = clf.score(train_X, train_Y)
     test_score = clf.score(test_X, test_Y)
-    print("\nTraining Accuracy: %f" % train_score)
+    print("Training Accuracy: %f" % train_score)
     print("Test Accuracy: %f" % test_score)
 
     y_true = test_Y.values
@@ -165,6 +167,10 @@ def get_classifier(clf_name):
         print("\nUsing classifier: NeuralNetwork (solver='adam', hidden_layer_sizes = (5, 2))")
         name = "NeuralNetwork"
         clf = MLPClassifier(solver='adam', hidden_layer_sizes = (5, 2), alpha=1e-5, random_state = 1)  # (5, 2) works better
+    elif (clf_name == ClassifierName.NaiveBayes):
+        print("\nUsing classifier: GaussianNB()")
+        name = "NaiveBayes"
+        clf = GaussianNB()
 
     return clf, name
 
@@ -195,4 +201,3 @@ if __name__ == '__main__':
     print(comparison_table)
     draw_roc_comparison_plot(roc_info, Y_test)
 
-    
