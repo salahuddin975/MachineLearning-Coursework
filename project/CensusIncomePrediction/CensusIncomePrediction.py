@@ -16,7 +16,11 @@ from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import BaggingClassifier
+from sklearn.ensemble import AdaBoostClassifier
 
+
+ENSEMBLE_TREE_SIZE = 20
 
 class DataType(Enum):
    Train = 1
@@ -33,6 +37,11 @@ class ClassifierName(Enum):
     SVM = 4
     DecisionTreeClassifier = 5
     NeuralNetwork = 6
+
+class UseEnsemble(Enum):
+    NoEnsemble = 1
+    Bagging = 2
+    Boosting = 3
 
 
 def preprocess_missing_value(df, processing_type):
@@ -121,18 +130,25 @@ def compute_roc_curve(clf, test_X,  test_Y):
     return roc_score, [fpr, tpr]
 
 
-def classify_dataset(clf, train_X, train_Y, test_X, test_Y):
+def classify_dataset(estimator, train_X, train_Y, test_X, test_Y, ensemble):
+    if (ensemble == UseEnsemble.NoEnsemble):
+        clf = estimator
+    elif (ensemble == UseEnsemble.Bagging):
+        clf = BaggingClassifier(base_estimator=estimator, n_estimators=ENSEMBLE_TREE_SIZE, max_samples = 0.7)
+    elif (ensemble == UseEnsemble.Boosting):
+        clf = AdaBoostClassifier(base_estimator=estimator, n_estimators=ENSEMBLE_TREE_SIZE, algorithm='SAMME')
+
     clf.fit(train_X, train_Y)
 
     print("First 25 prediction: ", clf.predict(test_X[ :25, : ]))
-    print("First 25 target:     ", test_Y[:25].values)
+    print("First 25 target:     ", test_Y[:25])
 
     train_score = clf.score(train_X, train_Y)
     test_score = clf.score(test_X, test_Y)
     print("Training Accuracy: %f" % train_score)
     print("Test Accuracy: %f" % test_score)
 
-    y_true = test_Y.values
+    y_true = test_Y
     y_pred = clf.predict(test_X)
     print("Confusion matrix: ")
     cm_score = confusion_matrix(y_true, y_pred)
@@ -166,7 +182,7 @@ def get_classifier(clf_name):
     elif (clf_name == ClassifierName.NeuralNetwork):
         print("\nUsing classifier: NeuralNetwork (solver='adam', hidden_layer_sizes = (5, 2))")
         name = "NeuralNetwork"
-        clf = MLPClassifier(solver='adam', hidden_layer_sizes = (5, 2), alpha=1e-5, random_state = 1)  # (5, 2) works better
+        clf = MLPClassifier(solver='adam', hidden_layer_sizes = (5, 2), max_iter=500, alpha=1e-5, random_state = 1)  # (5, 2) works better
     elif (clf_name == ClassifierName.NaiveBayes):
         print("\nUsing classifier: GaussianNB()")
         name = "NaiveBayes"
@@ -175,21 +191,90 @@ def get_classifier(clf_name):
     return clf, name
 
 
+def separate_wrong_predicted_examples(X, Y, predictions):
+    correctly_classified = []
+    wrongly_classified = []
+
+    for i in range(len(predictions)):
+        if(predictions[i] ^ Y[i]):
+            wrongly_classified.append(i)
+        else:
+            correctly_classified.append(i)
+
+    X_correct = np.delete(X, wrongly_classified, axis=0)
+    Y_correct = np.delete(Y, wrongly_classified, axis=0)
+    X_wrong = np.delete(X, correctly_classified, axis=0)
+    Y_wrong = np.delete(Y, correctly_classified, axis=0)
+
+    print("shape, X_correct: ", X_correct.shape)
+    print("shape, X_wrong: ", X_wrong.shape)
+
+    return X_correct, Y_correct, X_wrong, Y_wrong
+
+
+def work_with_strong_pattern(clf_strong, name, X_train_correct, Y_train_correct, X_test_correct, Y_test_correct):
+    clf_strong, name = get_classifier(ClassifierName.NeuralNetwork)
+    clf_strong.fit(X_train_correct, Y_train_correct)
+
+    train_score = clf_strong.score(X_train_correct, Y_train_correct)
+    test_score = clf_strong.score(X_test_correct, Y_test_correct)
+    print("Training Accuracy: %f" % train_score)
+    print("Test Accuracy: %f" % test_score)
+
+    y_pred = clf_strong.predict(X_test_correct)
+    print("Confusion matrix: ")
+    cm_score = confusion_matrix(Y_test_correct, y_pred)
+    print(cm_score)
+
+    _, roc = compute_roc_curve(clf_strong, X_test_correct,  Y_test_correct)
+    roc.insert(0, name)
+    roc_info = [roc]
+    draw_roc_comparison_plot(roc_info, Y_test)
+
+
+def work_with_weak_pattern(X_train_wrong, Y_train_wrong, X_test_wrong, Y_test_wrong):
+    clf_weak, name = get_classifier(ClassifierName.NeuralNetwork)
+    _, roc = classify_dataset(clf_weak, X_train_wrong, Y_train_wrong, X_test_wrong, Y_test_wrong, UseEnsemble.NoEnsemble)
+    roc.insert(0, name)
+    roc_info = [roc]
+    draw_roc_comparison_plot(roc_info, Y_test)
+
+
+def weak_pattern_proof(X_train, X_test, Y_train, Y_test):
+    clf, name = get_classifier(ClassifierName.NeuralNetwork)
+    _, roc = classify_dataset(clf, X_train, Y_train, X_test, Y_test, UseEnsemble.NoEnsemble)
+
+    roc.insert(0, name)
+    roc_info = [roc]
+    draw_roc_comparison_plot(roc_info, Y_test)
+
+    train_predictions = clf.predict(X_train)
+    test_predictions = clf.predict(X_test)
+    X_train_correct, Y_train_correct, X_train_wrong, Y_train_wrong = separate_wrong_predicted_examples(X_train, Y_train, train_predictions)
+    X_test_correct, Y_test_correct, X_test_wrong, Y_test_wrong = separate_wrong_predicted_examples(X_test, Y_test, test_predictions)
+
+    work_with_strong_pattern(clf, name, X_train_correct, Y_train_correct, X_test_correct, Y_test_correct)
+    work_with_weak_pattern(X_train_wrong, Y_train_wrong, X_test_wrong, Y_test_wrong)
+
+
 if __name__ == '__main__':
     X_train, Y_train = get_data(DataType.Train, MissingData.ReplaceWithMostFrequentData)
     X_test, Y_test = get_data(DataType.Test, MissingData.ReplaceWithMostFrequentData)
 
+    Y_train = Y_train.values
+    Y_test = Y_test.values
     print(X_train.shape)
     print(X_test.shape)
 
     X_train, X_test = scaler_trainsform(X_train, X_test)       # Mandatory for SVM; Works better for Neural Network
+
+    roc_info = []
     comparison_table = PrettyTable(['Classifier', 'TrainAccuracy', 'TestAccuracy', 'TrueNegative(00) <=50K',
                                     'FalsePositive(01)', 'FalseNegative(10)', 'TruePositive(11) >50K', 'ROC_Score'])
-    roc_info = []
 
     for clf_name in ClassifierName:
         clf, name = get_classifier(clf_name)
-        scores, roc_value = classify_dataset(clf, X_train, Y_train, X_test, Y_test)
+        scores, roc_value = classify_dataset(clf, X_train, Y_train, X_test, Y_test, UseEnsemble.NoEnsemble)  # Boosting != KNeighborsClassifier, MLPClassifier; SVM takes time
 
         scores.insert(0, name)
         comparison_table.add_row(scores)
@@ -201,3 +286,5 @@ if __name__ == '__main__':
     print(comparison_table)
     draw_roc_comparison_plot(roc_info, Y_test)
 
+    print("\nWeak pattern proof:")
+    weak_pattern_proof(X_train, X_test, Y_train, Y_test)
